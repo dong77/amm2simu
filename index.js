@@ -1,8 +1,7 @@
-
 class AMM {
-	constructor(name, F, fee) {
+    constructor(name, F, fee) {
         console.assert(F >= 1);
-	    this.name = name;
+        this.name = name;
         this.F = F; // amplificaiton factor
         this.totalSupply = 0.0;
         this.fee = fee;
@@ -20,10 +19,10 @@ class AMM {
     }
 
     setDebug(debug) {
-    	this.debug = debug;
+        this.debug = debug;
     }
 
-	_setVirtualBalances(vx, vy) {
+    _setVirtualBalances(vx, vy) {
         this.vx = vx;
         this.vy = vy;
     }
@@ -33,39 +32,47 @@ class AMM {
         this.y += amountY;
     }
     _assert(condition, str) {
-	  if (!condition) {
-	    throw new Error(str);
-	  }
-	}
+        if (!condition) {
+            throw new Error(str);
+        }
+    }
 
-	toString() {
+    toString() {
         return `\t` +
-		`x : ${this.x.toFixed(4)}\n\t` +
-        `y : ${this.y.toFixed(4)}\n\t` +
-        `vx: ${this.vx.toFixed(4)} (${(this.vx/this.x).toFixed(4)}x)\n\t` +
-        `vy: ${this.vy.toFixed(4)} (${(this.vy/this.y).toFixed(4)}x)\n\t` +
-        `X : ${this.X().toFixed(4)}\n\t` +
-        `Y : ${this.Y().toFixed(4)}\n\t` +
-        `p : ${this.price().toFixed(4)}\n\t` +
-        `s : ${this.totalSupply.toFixed(4)}`;
+            `x : ${this.x.toFixed(4)}\n\t` +
+            `y : ${this.y.toFixed(4)}\n\t` +
+            `vx: ${this.vx.toFixed(4)} (${(this.vx/this.x).toFixed(4)}x)\n\t` +
+            `vy: ${this.vy.toFixed(4)} (${(this.vy/this.y).toFixed(4)}x)\n\t` +
+            `X : ${this.X().toFixed(4)}\n\t` +
+            `Y : ${this.Y().toFixed(4)}\n\t` +
+            `p : ${this.price().toFixed(4)}\n\t` +
+            `s : ${this.totalSupply.toFixed(4)}`;
     }
 }
 
 class AAMM extends AMM {
-	X()     { return this.vx; }
-	Y()     { return this.vy; }
-    K()     { return this.X() * this.Y(); }
-    price() {return this.Y() / this.X(); }
+    X() {
+        return this.vx;
+    }
+    Y() {
+        return this.vy;
+    }
+    K() {
+        return this.X() * this.Y();
+    }
+    price() {
+        return this.Y() / this.X();
+    }
 
     _getAmountOut(amountIn, reserveIn, reserveOut, fee) {
-	    let amountInWithFee = amountIn * (10000 - fee);
-	    let numerator = amountInWithFee * reserveOut;
-	    let denominator = (reserveIn * 10000) + amountInWithFee;
-	    let amountOut = numerator / denominator;
-	    return amountOut;
-	}
+        let amountInWithFee = amountIn * (10000 - fee);
+        let numerator = amountInWithFee * reserveOut;
+        let denominator = (reserveIn * 10000) + amountInWithFee;
+        let amountOut = numerator / denominator;
+        return amountOut;
+    }
 
-	join(amountX, amountY) {
+    join(amountX, amountY) {
         let mintAmount = 0;
         if (this.totalSupply === 0) {
             this.vx += amountX * this.F;
@@ -73,11 +80,11 @@ class AAMM extends AMM {
 
             mintAmount = this.POOL_TOKEN_BASE;
         } else {
-            this._assert(Math.abs(this.x/this.y - amountX/amountY) < this.PRICE_TOLERANCE, "ratio invalid");
+            this._assert(Math.abs(this.x / this.y - amountX / amountY) < this.PRICE_TOLERANCE, "ratio invalid");
             mintAmount = amountX * this.totalSupply / this.x;
 
             let mintAmount2 = this.totalSupply * (amountX * this.price() + amountY) / (this.x * this.price() + this.y);
-            this._assert(mintAmount === mintAmount2, mintAmount +" !+ " + mintAmount2);
+            this._assert(mintAmount === mintAmount2, mintAmount + " !+ " + mintAmount2);
 
             const newTotalSupply = this.totalSupply + mintAmount;
             this.vx = this.vx * newTotalSupply / this.totalSupply;
@@ -89,16 +96,16 @@ class AAMM extends AMM {
         this.y += amountY;
 
         if (this.debug) {
-			console.log(`${this.name} [${++this.opidx}] join ${amountX.toFixed(4)}X and ${amountY.toFixed(4)} Y`);
-	        console.log(this.toString());
+            console.log(`${this.name} [${++this.opidx}] join ${amountX.toFixed(4)}X and ${amountY.toFixed(4)} Y`);
+            console.log(this.toString());
         }
         return mintAmount;
     }
 
-	exit(burnAmount) {
-		this._assert(burnAmount <= this.totalSupply, "insuffcient");
-        const amountX = burnAmount  * this.x /  this.totalSupply;
-        const amountY = burnAmount  * this.y /  this.totalSupply;
+    exit(burnAmount) {
+        this._assert(burnAmount <= this.totalSupply, "insuffcient");
+        const amountX = burnAmount * this.x / this.totalSupply;
+        const amountY = burnAmount * this.y / this.totalSupply;
 
         console.log("exitX: " + amountX);
         console.log("exitY: " + amountY);
@@ -113,13 +120,13 @@ class AAMM extends AMM {
         this.totalSupply = newTotalSupply;
 
         if (this.debug) {
-			console.log(`${this.name} [${++this.opidx}] exit -${amountX.toFixed(4)}X and -${amountY.toFixed(4)}Y`);
-	        console.log(this.toString());
+            console.log(`${this.name} [${++this.opidx}] exit -${amountX.toFixed(4)}X and -${amountY.toFixed(4)}Y`);
+            console.log(this.toString());
         }
         return [amountX, amountY];
     }
 
-	buyY(amountIn) {
+    buyY(amountIn) {
         let amountOut = this._getAmountOut(amountIn, this.vx, this.vy, this.fee);
         this.vx += amountIn;
         this.vy -= amountOut;
@@ -127,9 +134,9 @@ class AAMM extends AMM {
         this.y -= amountOut;
         this._assert(this.x >= 0 && this.y >= 0, "out of bounds");
 
-		if (this.debug) {
-			console.log(`${this.name} [${++this.opidx}] swap ${amountIn.toFixed(4)}X to ${amountOut.toFixed(4)}Y`);
-	        console.log(this.toString());
+        if (this.debug) {
+            console.log(`${this.name} [${++this.opidx}] swap ${amountIn.toFixed(4)}X to ${amountOut.toFixed(4)}Y`);
+            console.log(this.toString());
         }
         return [amountIn, amountOut];
     }
@@ -142,9 +149,9 @@ class AAMM extends AMM {
         this.x -= amountOut;
         this._assert(this.x >= 0 && this.y >= 0, "out of bounds");
 
-		if (this.debug) {
-			console.log(`${this.name} [${++this.opidx}] swap ${amountIn.toFixed(4)}Y to ${amountOut.toFixed(4)}X`);
-	        console.log(this.toString());
+        if (this.debug) {
+            console.log(`${this.name} [${++this.opidx}] swap ${amountIn.toFixed(4)}Y to ${amountOut.toFixed(4)}X`);
+            console.log(this.toString());
         }
         return [amountIn, amountOut];
     }
@@ -152,39 +159,47 @@ class AAMM extends AMM {
 
 class BAMM extends AMM {
 
-	X()     { return this.vx + this.x; }
-	Y()     { return this.vy + this.y; }
-    K()     { return this.X() * this.Y(); }
-    price() { return this.Y() / this.X(); }
+    X() {
+        return this.vx + this.x;
+    }
+    Y() {
+        return this.vy + this.y;
+    }
+    K() {
+        return this.X() * this.Y();
+    }
+    price() {
+        return this.Y() / this.X();
+    }
 
     _updateBalances(x, y) {
-		this.x = x;
-	    this.y = y;
-	    let p = this.price();
-	    // let weight = 0.2
-	    // p = p* weight + this.price() * (1-weight);
+        this.x = x;
+        this.y = y;
+        let p = this.price();
+        // let weight = 0.2
+        // p = p* weight + this.price() * (1-weight);
 
-	    if (x * p > y) {
-	    	this.vx = x * (this.F - 1);
-	    	this.vy = Math.max(0, this.X() * p - y);
+        if (x * p > y) {
+            this.vx = x * (this.F - 1);
+            this.vy = Math.max(0, this.X() * p - y);
 
-		} else {
-			this.vy = y * (this.F - 1);
-	    	this.vx = Math.max(0, this.Y() / p - x);
-	    }
-   }
+        } else {
+            this.vy = y * (this.F - 1);
+            this.vx = Math.max(0, this.Y() / p - x);
+        }
+    }
 
-	join(amountX, amountY) {
+    join(amountX, amountY) {
         let mintAmount = 0;
         if (this.totalSupply === 0) {
-			this.x = amountX;
-			this.y = amountY;
+            this.x = amountX;
+            this.y = amountY;
             this.vx = amountX * (this.F - 1);
             this.vy = amountY * (this.F - 1);
 
             mintAmount = this.POOL_TOKEN_BASE;
         } else {
-            this._assert(Math.abs(this.x/this.y - amountX/amountY) < this.PRICE_TOLERANCE, "ratio invalid");
+            this._assert(Math.abs(this.x / this.y - amountX / amountY) < this.PRICE_TOLERANCE, "ratio invalid");
             mintAmount = this.totalSupply * (amountX * this.price() + amountY) / (this.x * this.price() + this.y);
             let x = this.x + amountX;
             let y = this.y + amountY;
@@ -194,18 +209,18 @@ class BAMM extends AMM {
         this.totalSupply += mintAmount;
 
         if (this.debug) {
-			console.log(`${this.name} [${++this.opidx}] join ${amountX.toFixed(4)}X and ${amountY.toFixed(4)} Y`);
-	        console.log(this.toString());
+            console.log(`${this.name} [${++this.opidx}] join ${amountX.toFixed(4)}X and ${amountY.toFixed(4)} Y`);
+            console.log(this.toString());
         }
 
         return mintAmount;
     }
 
-	exit(burnAmount) {
-		this._assert(burnAmount <= this.totalSupply, "insuffcient");
+    exit(burnAmount) {
+        this._assert(burnAmount <= this.totalSupply, "insuffcient");
 
-        const amountX = burnAmount * this.x /  this.totalSupply;
-        const amountY = burnAmount * this.y /  this.totalSupply;
+        const amountX = burnAmount * this.x / this.totalSupply;
+        const amountY = burnAmount * this.y / this.totalSupply;
 
         let x = this.x - amountX;
         let y = this.y - amountY;
@@ -214,42 +229,42 @@ class BAMM extends AMM {
         this.totalSupply = this.totalSupply - burnAmount;
 
         if (this.debug) {
-			console.log(`${this.name} [${++this.opidx}] exit -${amountX.toFixed(4)}X and -${amountY.toFixed(4)}Y`);
-	        console.log(this.toString());
+            console.log(`${this.name} [${++this.opidx}] exit -${amountX.toFixed(4)}X and -${amountY.toFixed(4)}Y`);
+            console.log(this.toString());
         }
 
         return [amountX, amountY];
     }
 
-	buyY(amountIn) {
+    buyY(amountIn) {
         let _amountOut = this.Y() - (this.K() / (this.X() + amountIn));
         if (_amountOut > this.y) {
-        	_amountOut = this.y;
+            _amountOut = this.y;
         }
         let _amountIn = (this.K() / (this.Y() - _amountOut)) - this.X();
         this._updateBalances(this.x + _amountIn, this.y - _amountOut);
 
 
-		if (this.debug) {
-			console.log(`${this.name} [${++this.opidx}] swap ${_amountIn.toFixed(4)}X to ${_amountOut.toFixed(4)}Y`);
-	        console.log(this.toString());
+        if (this.debug) {
+            console.log(`${this.name} [${++this.opidx}] swap ${_amountIn.toFixed(4)}X to ${_amountOut.toFixed(4)}Y`);
+            console.log(this.toString());
         }
         return [_amountIn, _amountOut];
     }
 
-	buyX(amountIn) {
+    buyX(amountIn) {
         let _amountOut = this.X() - (this.K() / (this.Y() + amountIn));
         if (_amountOut > this.x) {
-        	_amountOut = this.x;
+            _amountOut = this.x;
         }
         let _amountIn = (this.K() / (this.X() - _amountOut)) - this.Y();
 
         this._updateBalances(this.x - _amountOut, this.y + _amountIn);
 
-		if (this.debug) {
+        if (this.debug) {
 
-			console.log(`${this.name} [${++this.opidx}] swap ${_amountIn.toFixed(4)}Y to ${_amountOut.toFixed(4)}X`);
-	        console.log(this.toString());
+            console.log(`${this.name} [${++this.opidx}] swap ${_amountIn.toFixed(4)}Y to ${_amountOut.toFixed(4)}X`);
+            console.log(this.toString());
         }
 
         return [_amountIn, _amountOut];
@@ -267,9 +282,8 @@ pool.join(100, 100);
 let x = 10;
 let y;
 for (i = 0; i < 1; i++) {
-	[x, y] = pool.buyY(x);
-	[y, x]  = pool.buyX(y)
+    [x, y] = pool.buyY(x);
+    [y, x] = pool.buyX(y)
 }
 
-console.log("profit: "+ (x- 10).toFixed(4) + "X")
-
+console.log("profit: " + (x - 10).toFixed(4) + "X")
